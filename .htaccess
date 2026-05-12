@@ -1,0 +1,33 @@
+<?php
+
+class Restock extends Model {
+    private $table = 'restock';
+
+    // Ambil semua data riwayat restock dengan JOIN ke barang dan supplier
+    public function getAll() {
+        $query = "SELECT r.*, b.nama_barang, s.nama_supplier 
+                  FROM " . $this->table . " r
+                  JOIN barang b ON r.id_barang = b.id
+                  JOIN supplier s ON r.id_supplier = s.id
+                  ORDER BY r.tanggal DESC";
+        
+        $this->db->query($query);
+        return $this->db->resultSet();
+    }
+
+    // Simpan data restock baru
+    public function create($data) {
+        $query = "INSERT INTO " . $this->table . " 
+                  (id_barang, id_supplier, qty, harga_beli, tanggal) 
+                  VALUES (:id_barang, :id_supplier, :qty, :harga_beli, NOW())";
+        
+        $this->db->query($query);
+        
+        $this->db->bind('id_barang', $data['id_barang']);
+        $this->db->bind('id_supplier', $data['id_supplier']);
+        $this->db->bind('qty', $data['qty']);
+        $this->db->bind('harga_beli', $data['harga_beli']);
+        
+        return $this->db->execute();
+    }
+}
