@@ -1,0 +1,15 @@
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    RewriteRule ^app(/|$) - [F,L]
+    RewriteRule ^database(/|$) - [F,L]
+
+    RewriteRule ^$ public/index.php [L]
+
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+
+    RewriteRule ^(.*)$ public/$1 [QSA,L]
+</IfModule>
