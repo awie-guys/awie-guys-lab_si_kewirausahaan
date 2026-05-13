@@ -13,10 +13,10 @@
 </head>
 <body>
 
-<?php include 'app/views/layouts/sidebar.php'; ?>
+<?php include '../../layouts/sidebar.php'; ?>
 
 <div class="main-content">
-<?php include 'app/views/layouts/navbar1.php'?>
+<?php include '../../layouts/navbar1.php'?>
 
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
