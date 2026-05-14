@@ -5,72 +5,68 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tambah Kategori - Laboratorium Kewirausahaan</title>
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-    <link rel="stylesheet" href="style/style.css">
 </head>
 <body>
-
-<?php include 'layout/sidebar.php'; ?>
-
-<div class="main-content">
     
-
-    <!-- Header Action -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h4 class="fw-bold mb-0">Tambah Kategori Baru</h4>
-            <p class="text-muted small">Masukkan informasi kategori produk baru ke dalam sistem.</p>
-        </div>
-        <a href="kategori.php" class="btn btn-outline-secondary btn-sm shadow-sm">
-            <i class="fas fa-arrow-left me-2"></i> Kembali
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Tambah Kategori</h1>
+        <a href="/admin/kategori" class="btn btn-sm btn-secondary shadow-sm">
+            <i class="fas fa-arrow-left fa-sm text-white-50 mr-1"></i> Kembali ke Daftar
         </a>
     </div>
 
-    <!-- Form Section -->
-    <div class="table-container">
-        <form action="proses_tambah_kategori.php" method="POST">
-            <div class="row">
-                <!-- Bagian Kiri: Detail Kategori -->
-                <div class="col-md-8">
-                    <div class="mb-3">
-                        <label for="nama_kategori" class="form-label fw-bold">Nama Kategori</label>
-                        <input type="text" class="form-control" id="nama_kategori" name="nama_kategori" placeholder="Contoh: Makanan Ringan" required>
-                    </div>
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 bg-primary">
+                    <h6 class="m-0 font-weight-bold text-white">Formulir Kategori Baru</h6>
                 </div>
+                <div class="card-body">
+                    <form action="/admin/kategori/store" method="POST">
+                        <div class="form-group mb-4">
+                            <label for="nama" class="font-weight-bold text-dark">Nama Kategori <span class="text-danger">*</span></label>
+                            <input type="text" 
+                                   name="nama" 
+                                   id="nama" 
+                                   class="form-control" 
+                                   placeholder="Contoh: Alat Tulis Kantor, Makanan Ringan" 
+                                   required>
+                            <small class="text-muted">Gunakan nama yang spesifik untuk mempermudah klasifikasi barang.</small>
+                        </div>
 
-                <!-- Bagian Kanan: Status & Ikon -->
-                <div class="col-md-4">
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Status Kategori</label>
-                        <select class="form-select" name="status">
-                            <option value="aktif">Aktif</option>
-                            <option value="nonaktif">Non-Aktif</option>
-                        </select>
-                    </div>
+                        <div class="form-group mb-4">
+                            <label for="deskripsi" class="font-weight-bold text-dark">Deskripsi</label>
+                            <textarea name="deskripsi" 
+                                      id="deskripsi" 
+                                      rows="4" 
+                                      class="form-control" 
+                                      placeholder="Tambahkan keterangan tambahan mengenai kategori ini..."></textarea>
+                        </div>
 
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Pilih Ikon / Emoji</label>
-                        <input type="text" class="form-control" name="icon" placeholder=" copy paste ikon disini, contoh:✏️">
-                        <div class="form-text">Ikon ini akan muncul di daftar kategori.</div>
-                    </div>
+                        <div class="border-top pt-4">
+                            <button type="submit" class="btn btn-primary px-4">
+                                <i class="fas fa-save mr-2"></i> Simpan Kategori
+                            </button>
+                            <button type="reset" class="btn btn-light ml-2">Reset</button>
+                        </div>
+                    </form>
                 </div>
             </div>
-
-            <hr class="my-4">
-
-            <div class="d-flex justify-content-end gap-2">
-                <button type="reset" class="btn btn-light px-4">Reset</button>
-                <button type="submit" class="btn-add px-4">
-                    <i class="fas fa-save me-2"></i> Simpan Kategori
-                </button>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card shadow mb-4 border-left-info">
+                <div class="card-body">
+                    <h6 class="font-weight-bold text-info"><i class="fas fa-info-circle mr-2"></i> Petunjuk</h6>
+                    <p class="small text-muted mt-2">
+                        Pastikan nama kategori belum pernah terdaftar sebelumnya untuk menghindari duplikasi data di database.
+                    </p>
+                </div>
             </div>
-        </form>
+        </div>
     </div>
 </div>
 
-<?php include 'layout/footer.php'; ?>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

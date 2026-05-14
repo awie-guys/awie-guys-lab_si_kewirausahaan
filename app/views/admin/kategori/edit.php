@@ -3,80 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Kategori - Laboratorium Kewirausahaan</title>
-
-
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style/style.css"> 
+    <title>Daftar Barang - Kopsis POS</title>
 </head>
 <body>
 
-<?php include 'layout/sidebar.php'; ?>
-
-<div class="main-content">
-
-    <!-- HEADER ACTION -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h4 class="fw-bold mb-0">Edit Kategori</h4>
-            <p class="text-muted small">Perbarui informasi kategori produk di sini.</p>
-        </div>
-        <a href="kategori.php" class="btn btn-outline-secondary btn-sm rounded-3">
-            <i class="fas fa-arrow-left me-2"></i> Kembali
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Edit Kategori</h1>
+        <a href="/admin/kategori" class="btn btn-sm btn-secondary shadow-sm">
+            <i class="fas fa-arrow-left fa-sm text-white-50 mr-1"></i> Kembali
         </a>
     </div>
 
-    <!-- FORM EDIT SECTION -->
-    <div class="table-container" style="max-width: 1500px;">
-        <form action="proses_edit.php" method="POST">
-            <input type="hidden" name="id" value="1"> <!-- Contoh ID Kategori -->
-
-            <div class="mb-4 text-center">
-                <div class="cat-icon-box mx-auto mb-2" style="width: 60px; height: 60px; font-size: 24px;">
-                    🍔
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 bg-warning">
+                    <h6 class="m-0 font-weight-bold text-white">Ubah Data: <?= htmlspecialchars($kategori['nama']) ?></h6>
                 </div>
-                <p class="small text-muted">Ikon Kategori: Makanan</p>
+                <div class="card-body">
+                    <form action="/admin/kategori/update/<?= $kategori['id'] ?>" method="POST">
+                        <div class="form-group mb-4">
+                            <label for="nama" class="font-weight-bold text-dark">Nama Kategori <span class="text-danger">*</span></label>
+                            <input type="text" 
+                                   name="nama" 
+                                   id="nama" 
+                                   class="form-control" 
+                                   value="<?= htmlspecialchars($kategori['nama']) ?>" 
+                                   required>
+                        </div>
+
+                        <div class="form-group mb-4">
+                            <label for="deskripsi" class="font-weight-bold text-dark">Deskripsi</label>
+                            <textarea name="deskripsi" 
+                                      id="deskripsi" 
+                                      rows="4" 
+                                      class="form-control"><?= htmlspecialchars($kategori['deskripsi'] ?? '') ?></textarea>
+                        </div>
+
+                        <div class="form-group mb-4">
+                            <label class="font-weight-bold text-dark">Status Kategori</label>
+                            <div class="mt-2">
+                                <div class="custom-control custom-radio custom-control-inline">
+                                    <input type="radio" id="status1" name="status" value="Aktif" class="custom-control-input" <?= ($kategori['status'] ?? 'Aktif') == 'Aktif' ? 'checked' : '' ?>>
+                                    <label class="custom-control-label" for="status1">Aktif</label>
+                                </div>
+                                <div class="custom-control custom-radio custom-control-inline">
+                                    <input type="radio" id="status2" name="status" value="Nonaktif" class="custom-control-input" <?= ($kategori['status'] ?? '') == 'Nonaktif' ? 'checked' : '' ?>>
+                                    <label class="custom-control-label" for="status2">Nonaktif</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="border-top pt-4 text-right">
+                            <a href="/admin/kategori" class="btn btn-light mr-2">Batal</a>
+                            <button type="submit" class="btn btn-warning px-4 text-white">
+                                <i class="fas fa-check-circle mr-2"></i> Perbarui Data
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
-
-            <div class="row g-3">
-                <div class="col-md-12">
-                    <label class="form-label small fw-bold text-uppercase">Nama Kategori</label>
-                    <input type="text" class="form-control rounded-3" name="nama_kategori" value="Makanan" required>
-                </div>
-
-                <div class="col-md-12">
-                    <label class="form-label small fw-bold text-uppercase">Pilih Ikon (Emoji)</label>
-                    <div class="d-flex gap-2">
-                        <input type="text" class="form-control rounded-3" name="ikon" value="🍔" placeholder="Tempel emoji di sini">
-                        <button type="button" class="btn btn-light border small">Pilih</button>
-                    </div>
-                </div>
-
-                <div class="col-md-12">
-                    <label class="form-label small fw-bold text-uppercase">Status Kategori</label>
-                    <select class="form-select rounded-3" name="status">
-                        <option value="aktif" selected>Aktif</option>
-                        <option value="nonaktif">Nonaktif</option>
-                    </select>
-                </div>
-
-                <div class="col-md-12 mt-4">
-                    <hr class="text-muted opacity-25">
-                    <div class="d-flex justify-content-end gap-2">
-                        <button type="reset" class="btn btn-light px-4 fw-bold small">Reset</button>
-                        <button type="submit" class="btn-add px-4">Simpan Perubahan</button>
-                    </div>
-                </div>
-            </div>
-        </form>
+        </div>
     </div>
 </div>
 
-<div class="footer">
-    &copy; 2026 LABORATORIUM KEWIRAUSAHAAN MTsN 8 BANYUWANGI
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
