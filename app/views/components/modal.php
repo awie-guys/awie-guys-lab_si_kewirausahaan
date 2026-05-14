@@ -1,0 +1,1 @@
+kalau bisa isi satu satu per fitur gitu biar nanti di histori commit nya banyak bukan cuman satu, jadi buat satu satu aja, selesai satu comiit
