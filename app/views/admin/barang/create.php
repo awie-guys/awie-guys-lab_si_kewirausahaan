@@ -5,114 +5,78 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tambah Barang - Laboratorium Kewirausahaan</title>
 
-    <!-- Bootstrap & Font Awesome -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style/style.css">
 </head>
 <body>
 
-<?php include 'layout/sidebar.php'; ?>
-
 <div class="main-content">
 
-    <!-- HEADER ACTION -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h4 class="fw-bold mb-0">Tambah Barang Baru</h4>
-            <p class="text-muted small">Input data barang baru untuk stok koperasi sekolah.</p>
-        </div>
-        <a href="barang.php" class="btn btn-sm btn-light border rounded-3 px-3">
-            <i class="fas fa-arrow-left me-2"></i> Kembali
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Tambah Barang Baru</h1>
+        <a href="/admin/barang" class="btn btn-sm btn-secondary shadow-sm">
+            <i class="fas fa-arrow-left mr-1"></i> Kembali
         </a>
     </div>
 
-    <!-- FORM SECTION -->
-    <div class="table-container shadow-sm border-0">
-        <form action="proses_tambah.php" method="POST" enctype="multipart/form-data">
-            <div class="row g-4">
-                
-                <!-- Kiri: Informasi Dasar -->
-                <div class="col-md-6">
-                    <h6 class="fw-bold mb-3 text-success"><i class="fas fa-info-circle me-2"></i>Informasi Barang</h6>
-                    
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold text-uppercase">Kode Barang</label>
-                        <input type="text" class="form-control rounded-3" name="kode_barang" placeholder="Contoh: BRG001" required>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold text-uppercase">Nama Barang</label>
-                        <input type="text" class="form-control rounded-3" name="nama_barang" placeholder="Masukkan nama barang" required>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold text-uppercase">Kategori</label>
-                        <select class="form-select rounded-3" name="id_kategori">
-                            <option selected disabled>Pilih Kategori</option>
-                            <option value="1">Alat Tulis</option>
-                            <option value="2">Makanan</option>
-                            <option value="3">Minuman</option>
-                        </select>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold text-uppercase">Satuan</label>
-                        <input type="text" class="form-control rounded-3" name="satuan" placeholder="Contoh: pcs, pack, botol">
-                    </div>
-                </div>
-
-                <!-- Kanan: Harga & Stok -->
-                <div class="col-md-6">
-                    <h6 class="fw-bold mb-3 text-success"><i class="fas fa-coins me-2"></i>Harga & Stok</h6>
-                    
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold text-uppercase">Harga Jual (Rp)</label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-light border-end-0">Rp</span>
-                            <input type="number" class="form-control rounded-3 border-start-0" name="harga_jual" placeholder="0">
+    <div class="card shadow mb-4 border-left-primary">
+        <div class="card-body">
+            <form action="/admin/barang/store" method="POST" enctype="multipart/form-data">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label class="font-weight-bold">Nama Barang <span class="text-danger">*</span></label>
+                            <input type="text" name="nama" class="form-control" placeholder="Contoh: Pensil 2B" required>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label class="font-weight-bold">Kategori <span class="text-danger">*</span></label>
+                            <select name="kategori_id" class="form-control" required>
+                                <option value="">-- Pilih Kategori --</option>
+                                <?php foreach ($kategoris as $k): ?>
+                                    <option value="<?= $k['id'] ?>"><?= htmlspecialchars($k['nama']) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label class="font-weight-bold">Harga Beli (Modal)</label>
+                            <input type="number" name="harga_beli" class="form-control" placeholder="0">
+                        </div>
+                        <div class="form-group mb-3">
+                            <label class="font-weight-bold">Harga Jual <span class="text-danger">*</span></label>
+                            <input type="number" name="harga_jual" class="form-control" placeholder="0" required>
                         </div>
                     </div>
-
-                    <div class="row">
-                        <div class="col-6">
-                            <div class="mb-3">
-                                <label class="form-label small fw-bold text-uppercase">Stok Awal</label>
-                                <input type="number" class="form-control rounded-3" name="stok" value="0">
-                            </div>
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label class="font-weight-bold">Stok Awal</label>
+                            <input type="number" name="stok" class="form-control" value="0">
                         </div>
-                        <div class="col-6">
-                            <div class="mb-3">
-                                <label class="form-label small fw-bold text-uppercase">Stok Minimal</label>
-                                <input type="number" class="form-control rounded-3" name="stok_min" value="10">
-                            </div>
+                        <div class="form-group mb-3">
+                            <label class="font-weight-bold">Satuan (Pcs/Box/Unit)</label>
+                            <input type="text" name="satuan" class="form-control" placeholder="Contoh: Pcs">
                         </div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold text-uppercase">Foto Barang</label>
-                        <input type="file" class="form-control rounded-3" name="foto">
-                        <p class="text-muted" style="font-size: 10px; margin-top: 5px;">Format: JPG, PNG. Maksimal 2MB.</p>
+                        <div class="form-group mb-3">
+                            <label class="font-weight-bold">Foto Barang</label>
+                            <input type="file" name="foto" class="form-control-file border p-1 rounded w-100">
+                            <small class="text-muted">Format: JPG, PNG. Maks: 2MB</small>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label class="font-weight-bold">Deskripsi Barang</label>
+                            <textarea name="deskripsi" class="form-control" rows="3"></textarea>
+                        </div>
                     </div>
                 </div>
-
-                <!-- Tombol Action -->
-                <div class="col-12 mt-2">
-                    <hr class="opacity-25">
-                    <div class="d-flex justify-content-end gap-2">
-                        <button type="reset" class="btn btn-light px-4 fw-bold small rounded-3">Reset</button>
-                        <button type="submit" class="btn-add px-4 ">
-                            <i class="fas fa-save me-2"></i> Simpan Barang
-                        </button>
-                    </div>
+                <hr>
+                <div class="text-right">
+                    <button type="reset" class="btn btn-light mr-2">Reset</button>
+                    <button type="submit" class="btn btn-primary px-4">
+                        <i class="fas fa-save mr-2"></i> Simpan Data Barang
+                    </button>
                 </div>
-
-            </div>
-        </form>
+            </form>
+        </div>
     </div>
 </div>
+</div>
 
-<?php include 'layout/footer.php'; ?>   
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
