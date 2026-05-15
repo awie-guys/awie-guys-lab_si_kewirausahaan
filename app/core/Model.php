@@ -59,4 +59,8 @@ class Model
     {
         return $this->query($sql, $params)->fetch();
     }
+    public function getDb(): PDO
+{
+    return $this->db;
+}
 }
