@@ -68,5 +68,4 @@ class Restock extends Model
                 ORDER BY r.tanggal DESC, r.id DESC";
 
         return $this->all($sql, [':start' => $start, ':end' => $end]);
-    }
-}
+    }}
