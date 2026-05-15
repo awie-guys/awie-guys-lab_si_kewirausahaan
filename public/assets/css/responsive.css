@@ -1,0 +1,5 @@
+@media (max-width: 992px) {
+    .sidebar { left: -260px; z-index: 1001; }
+    .sidebar.active { left: 0; }
+    .navbar, .main-content { width: 100%; margin-left: 0; }
+}
