@@ -3,7 +3,7 @@
 class Barang extends Model {
 
     public function getAll() {
-        // Menggunakan JOIN untuk mendapatkan nama kategori [cite: 15]
+        // Menggunakan JOIN untuk mendapatkan nama kategori 
         $query = "SELECT b.id, b.kode_barang, b.nama, b.barcode, b.id_kategori, b.satuan, 
                          b.harga_jual, b.stok, b.stok_minimum, b.status, k.nama as nama_kategori 
                   FROM barang b 
