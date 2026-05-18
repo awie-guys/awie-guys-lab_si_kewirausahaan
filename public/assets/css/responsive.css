@@ -1,0 +1,99 @@
+
+/* TAMPILAN TABLET (Max-Width: 992px) */
+@media (max-width: 992px) {
+    .sidebar {
+        transform: translateX(-100%); 
+    }
+
+    .main-content, 
+    .footer {
+        margin-left: 0 !important;
+        width: 100% !important;
+        padding: 20px;
+    }
+    .sidebar.active {
+        transform: translateX(0);
+        box-shadow: 10px 0 40px rgba(0, 0, 0, 0.15);
+    }
+}
+
+/* TAMPILAN HANDPHONE (Max-Width: 768px) */
+@media (max-width: 768px) {
+    .top-navbar-container {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+        padding: 20px 15px;
+    }
+
+    .nav-center {
+        width: 100%;
+        order: 3; /* Kotak pencarian otomatis pindah paling bawah */
+    }
+    
+    .nav-right {
+        justify-content: center;
+        width: 100%;
+    }
+
+    .dashboard-cards {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .card-item {
+        width: 100%;
+        height: auto;
+        min-height: 120px;
+    }
+
+    .graph-area {
+        flex-direction: column; /* Grafik & Pie Chart tersusun vertikal atas-bawah */
+        gap: 20px;
+    }
+
+    .sales-chart, 
+    .pie-chart-box, 
+    .recent-activities {
+        width: 100%;
+        flex: none;
+    }
+
+    .table-container {
+        padding: 10px;
+        overflow-x: auto; /* Mengaktifkan fitur geser/scroll kanan-kiri pada tabel */
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .table thead th {
+        padding: 10px;
+        font-size: 11px;
+    }
+
+    .table tbody td {
+        padding: 10px;
+        font-size: 12px;
+    }
+    
+    /* Layout Grid POS Kasir untuk Produk */
+    .product-grid {
+        grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+        gap: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .card-value {
+        font-size: 26px;
+    }
+
+    .pie-chart-circle {
+        width: 160px;
+        height: 160px;
+    }
+    
+    .pie-chart-inner {
+        width: 80px;
+        height: 80px;
+    }
+}
