@@ -1,8 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 class AuthController extends Controller
 {
-    private User $userModel;
+    private $userModel;
 
     public function __construct()
     {
@@ -11,60 +13,79 @@ class AuthController extends Controller
 
     public function index(): void
     {
+        $this->loginForm();
+    }
+
+    public function loginForm(): void
+    {
+        // Kalau sudah login, langsung arahkan sesuai role
         if (Session::isLoggedIn()) {
-            $this->redirectByRole(Session::user()['role']);
+            $this->redirectByRole(Session::role());
         }
 
         $this->view('auth/login', [
             'title' => 'Login',
-            'error' => Session::flash('error')
+            'flash' => [
+                'error' => Session::getFlash('error'),
+                'success' => Session::getFlash('success'),
+            ],
+            'old' => Session::get('_old_login', []),
         ]);
+
+        Session::remove('_old_login');
     }
 
     public function login(): void
     {
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            $this->redirect('/login');
-        }
-
+        // Validasi input
         $username = trim($_POST['username'] ?? '');
-        $password = trim($_POST['password'] ?? '');
+        $password = (string) ($_POST['password'] ?? '');
+
+        Session::set('_old_login', [
+            'username' => $username,
+        ]);
 
         if ($username === '' || $password === '') {
-            Session::flash('error', 'Username dan password wajib diisi');
-            $this->redirect('/login');
-        }
-  $user = $this->userModel->findByUsername($username);
-
-        if (!$user) {
-            Session::flash('error', 'Username atau password salah');
+            Session::setFlash('error', 'Username dan password wajib diisi.');
             $this->redirect('/login');
         }
 
-        if (($user['status'] ?? 'aktif') !== 'aktif') {
-            Session::flash('error', 'Akun tidak aktif');
+        // Cek user
+        $user = $this->userModel->findByUsername($username);
+
+        if (!$user || !Security::passwordVerify($password, $user['password'])) {
+            Session::setFlash('error', 'Username atau password salah.');
             $this->redirect('/login');
         }
 
-        if (!password_verify($password, $user['password'])) {
-            Session::flash('error', 'Username atau password salah');
+        if (($user['status'] ?? 'nonaktif') !== 'aktif') {
+            Session::setFlash('error', 'Akun kamu sedang nonaktif.');
             $this->redirect('/login');
         }
 
+        if (!in_array($user['role'], ['admin', 'kasir'], true)) {
+            Session::setFlash('error', 'Role akun tidak valid.');
+            $this->redirect('/login');
+        }
+
+        // Simpan session
         unset($user['password']);
 
-        Session::set('user', $user);
+        $user['nama'] = $user['username'];
+
+        Session::remove('_old_login');
+        Session::login($user);
 
         $this->redirectByRole($user['role']);
     }
 
     public function logout(): void
     {
-        Session::destroy();
-        $this->redirect('/login');
+        Session::logout();
+        Response::redirect('/login');
     }
 
-    private function redirectByRole(string $role): void
+    private function redirectByRole(?string $role): void
     {
         if ($role === 'admin') {
             $this->redirect('/admin/dashboard');
@@ -74,6 +95,7 @@ class AuthController extends Controller
             $this->redirect('/kasir/dashboard');
         }
 
+        Session::logout();
         $this->redirect('/login');
     }
 }

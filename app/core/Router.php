@@ -1,23 +1,25 @@
 <?php
 
+declare(strict_types=1);
+
 class Router
 {
-    private array $routes = [
+    private $routes = [
         'GET' => [],
         'POST' => [],
     ];
 
-    public function get(string $uri, string|callable $action): void
+    public function get(string $uri, $action): void
     {
         $this->addRoute('GET', $uri, $action);
     }
 
-    public function post(string $uri, string|callable $action): void
+    public function post(string $uri, $action): void
     {
         $this->addRoute('POST', $uri, $action);
     }
 
-    private function addRoute(string $method, string $uri, string|callable $action): void
+    private function addRoute(string $method, string $uri, $action): void
     {
         $uri = $this->normalizeUri($uri);
 
@@ -34,7 +36,7 @@ class Router
         $uri = $this->getCurrentUri();
 
         if (!isset($this->routes[$method])) {
-            $this->abort(404, 'HTTP method tidak didukung.');
+            $this->abort(405, 'Method tidak didukung.');
         }
 
         foreach ($this->routes[$method] as $route) {
@@ -42,7 +44,6 @@ class Router
                 array_shift($matches);
 
                 $params = array_map('urldecode', $matches);
-
                 $this->dispatch($route['action'], $params);
                 return;
             }
@@ -51,20 +52,21 @@ class Router
         $this->abort(404, 'Route tidak ditemukan.');
     }
 
-    private function dispatch(string|callable $action, array $params = []): void
+    private function dispatch($action, array $params = []): void
     {
         if (is_callable($action)) {
             call_user_func_array($action, $params);
             return;
         }
 
-        if (!str_contains($action, '@')) {
+        if (!is_string($action) || strpos($action, '@') === false) {
             $this->abort(500, 'Format action route tidak valid.');
         }
 
         [$controllerName, $methodName] = explode('@', $action, 2);
 
-        $controllerFile = dirname(__DIR__) . '/controllers/' . $controllerName . '.php';
+        // Load controller
+        $controllerFile = APP_PATH . DIRECTORY_SEPARATOR . 'controllers' . DIRECTORY_SEPARATOR . $controllerName . '.php';
 
         if (!file_exists($controllerFile)) {
             $this->abort(404, 'Controller tidak ditemukan: ' . $controllerName);
@@ -89,6 +91,7 @@ class Router
     {
         $pattern = preg_quote($uri, '#');
 
+        // Support route model sederhana: /admin/barang/edit/{id}
         $pattern = preg_replace(
             '#\\\\\{[a-zA-Z_][a-zA-Z0-9_]*\\\\\}#',
             '([^/]+)',
@@ -100,18 +103,23 @@ class Router
 
     private function getCurrentUri(): string
     {
-        $uri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+        $uri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
+        $uri = $uri ?: '/';
 
         $scriptDir = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? ''));
-        $projectDir = str_replace('\\', '/', dirname($scriptDir));
+        $projectDir = preg_replace('#/public$#', '', $scriptDir);
 
-        $possibleBases = array_filter([
+        $bases = array_filter([
             rtrim($scriptDir, '/'),
             rtrim($projectDir, '/'),
         ]);
 
-        foreach ($possibleBases as $base) {
-            if ($base !== '' && $base !== '/' && str_starts_with($uri, $base)) {
+        usort($bases, static function ($a, $b) {
+            return strlen($b) <=> strlen($a);
+        });
+
+        foreach ($bases as $base) {
+            if ($base !== '' && $base !== '/' && substr($uri, 0, strlen($base)) === $base) {
                 $uri = substr($uri, strlen($base));
                 break;
             }
@@ -124,29 +132,20 @@ class Router
     {
         $uri = '/' . trim($uri, '/');
 
-        if ($uri !== '/') {
-            $uri = rtrim($uri, '/');
-        }
-
-        return $uri;
+        return $uri === '/' ? '/' : rtrim($uri, '/');
     }
 
-    private function abort(int $statusCode = 404, string $message = ''): void
+    private function abort(int $statusCode, string $message): void
     {
         http_response_code($statusCode);
 
-        $viewFile = dirname(__DIR__) . '/views/errors/' . $statusCode . '.php';
-
-        if (file_exists($viewFile)) {
-            require $viewFile;
-            exit;
+        if (class_exists('Response')) {
+            Response::abort($statusCode, $message);
+            return;
         }
 
-        $safeMessage = htmlspecialchars($message, ENT_QUOTES, 'UTF-8');
-
-        echo '<h1>' . $statusCode . '</h1>';
-        echo '<p>' . ($safeMessage ?: 'Halaman tidak ditemukan.') . '</p>';
-
+        echo '<h1>' . htmlspecialchars((string) $statusCode, ENT_QUOTES, 'UTF-8') . '</h1>';
+        echo '<p>' . htmlspecialchars($message, ENT_QUOTES, 'UTF-8') . '</p>';
         exit;
     }
 }

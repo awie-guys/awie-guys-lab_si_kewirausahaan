@@ -1,121 +1,221 @@
 <?php
 
-class SupplierController extends Controller {
+declare(strict_types=1);
 
-    public function index() {
-        $supplierModel = $this->model('Supplier');
-        $data['supplier'] = $supplierModel->getAll();
-        
-        $this->view('admin/supplier/index', $data);
+class SupplierController extends Controller
+{
+    private $supplierModel;
+
+    public function __construct()
+    {
+        $this->supplierModel = $this->model('Supplier');
     }
 
-    public function create() {
-        $this->view('admin/supplier/form');
+    public function index(): void
+    {
+        // Cek akses
+        $this->requireRole('admin');
+
+        // Ambil data
+        $suppliers = $this->supplierModel->getAll();
+
+        // Tampilkan halaman
+        $this->view('admin/supplier/index', [
+            'title' => 'Data Supplier',
+            'activeMenu' => 'supplier',
+            'user' => Session::user(),
+            'suppliers' => $suppliers,
+            'flash' => [
+                'success' => Session::getFlash('success'),
+                'error' => Session::getFlash('error'),
+            ],
+        ]);
     }
 
-    public function store() {
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $nama = trim($_POST['nama'] ?? '');
-            $kontak_person = trim($_POST['kontak_person'] ?? '') ?: null;
-            $no_hp = trim($_POST['no_hp'] ?? '') ?: null;
-            $alamat = trim($_POST['alamat'] ?? '') ?: null;
-            $keterangan = trim($_POST['keterangan'] ?? '') ?: null;
-            $status = $_POST['status'] ?? 'aktif';
+    public function create(): void
+    {
+        // Cek akses
+        $this->requireRole('admin');
 
-            if (empty($nama)) {
-                Session::setFlash('error', 'Nama supplier wajib diisi.');
-                $this->redirect('/admin/supplier/create');
-                return;
-            }
+        // Tampilkan form
+        $this->view('admin/supplier/form', [
+            'title' => 'Tambah Supplier',
+            'activeMenu' => 'supplier',
+            'user' => Session::user(),
+            'formAction' => '/admin/supplier/store',
+            'formMode' => 'create',
+            'supplier' => null,
+            'errors' => Session::get('_errors', []),
+            'old' => Session::get('_old', []),
+        ]);
 
-            $supplierModel = $this->model('Supplier');
-            $supplierModel->insert([
-                'nama' => $nama,
-                'kontak_person' => $kontak_person,
-                'no_hp' => $no_hp,
-                'alamat' => $alamat,
-                'keterangan' => $keterangan,
-                'status' => $status
-            ]);
+        Session::remove('_errors');
+        Session::remove('_old');
+    }
 
-            Session::setFlash('success', 'Supplier berhasil ditambahkan.');
+    public function store(): void
+    {
+        // Cek akses
+        $this->requireRole('admin');
+
+        // Validasi input
+        $data = [
+            'nama' => trim($_POST['nama'] ?? ''),
+            'kontak_person' => trim($_POST['kontak_person'] ?? ''),
+            'no_hp' => trim($_POST['no_hp'] ?? ''),
+            'alamat' => trim($_POST['alamat'] ?? ''),
+            'keterangan' => trim($_POST['keterangan'] ?? ''),
+            'status' => trim($_POST['status'] ?? 'aktif'),
+        ];
+
+        Session::set('_old', $data);
+
+        $errors = Validator::validate($data, [
+            'nama' => ['required', 'max:150'],
+            'kontak_person' => ['max:100'],
+            'no_hp' => ['max:20'],
+        ]);
+
+        if (!Validator::in($data['status'], ['aktif', 'nonaktif'])) {
+            $errors['status'] = 'Status tidak valid.';
+        }
+
+        if ($this->supplierModel->namaExists($data['nama'])) {
+            $errors['nama'] = 'Nama supplier sudah dipakai.';
+        }
+
+        if (!empty($errors)) {
+            Session::set('_errors', $errors);
+            $this->redirect('/admin/supplier/create');
+        }
+
+        // Simpan data
+        $created = $this->supplierModel->create($data);
+
+        if (!$created) {
+            Session::setFlash('error', 'Supplier gagal ditambahkan.');
+            $this->redirect('/admin/supplier/create');
+        }
+
+        Session::remove('_old');
+        Session::setFlash('success', 'Supplier berhasil ditambahkan.');
+        $this->redirect('/admin/supplier');
+    }
+
+    public function edit($id): void
+    {
+        // Cek akses
+        $this->requireRole('admin');
+
+        $id = (int) $id;
+        $supplier = $this->supplierModel->findById($id);
+
+        if (!$supplier) {
+            Session::setFlash('error', 'Supplier tidak ditemukan.');
             $this->redirect('/admin/supplier');
         }
+
+        // Tampilkan form
+        $this->view('admin/supplier/form', [
+            'title' => 'Edit Supplier',
+            'activeMenu' => 'supplier',
+            'user' => Session::user(),
+            'formAction' => '/admin/supplier/update/' . $id,
+            'formMode' => 'edit',
+            'supplier' => $supplier,
+            'errors' => Session::get('_errors', []),
+            'old' => Session::get('_old', []),
+        ]);
+
+        Session::remove('_errors');
+        Session::remove('_old');
     }
 
-    public function edit($id) {
-        $supplierModel = $this->model('Supplier');
-        $data['supplier'] = $supplierModel->getById($id);
+    public function update($id): void
+    {
+        // Cek akses
+        $this->requireRole('admin');
 
-        if (!$data['supplier']) {
-            Session::setFlash('error', 'Data supplier tidak ditemukan.');
+        $id = (int) $id;
+        $supplier = $this->supplierModel->findById($id);
+
+        if (!$supplier) {
+            Session::setFlash('error', 'Supplier tidak ditemukan.');
             $this->redirect('/admin/supplier');
-            return;
         }
 
-        $this->view('admin/supplier/form', $data);
+        // Validasi input
+        $data = [
+            'nama' => trim($_POST['nama'] ?? ''),
+            'kontak_person' => trim($_POST['kontak_person'] ?? ''),
+            'no_hp' => trim($_POST['no_hp'] ?? ''),
+            'alamat' => trim($_POST['alamat'] ?? ''),
+            'keterangan' => trim($_POST['keterangan'] ?? ''),
+            'status' => trim($_POST['status'] ?? 'aktif'),
+        ];
+
+        Session::set('_old', $data);
+
+        $errors = Validator::validate($data, [
+            'nama' => ['required', 'max:150'],
+            'kontak_person' => ['max:100'],
+            'no_hp' => ['max:20'],
+        ]);
+
+        if (!Validator::in($data['status'], ['aktif', 'nonaktif'])) {
+            $errors['status'] = 'Status tidak valid.';
+        }
+
+        if ($this->supplierModel->namaExists($data['nama'], $id)) {
+            $errors['nama'] = 'Nama supplier sudah dipakai.';
+        }
+
+        if (!empty($errors)) {
+            Session::set('_errors', $errors);
+            $this->redirect('/admin/supplier/edit/' . $id);
+        }
+
+        // Simpan perubahan
+        $updated = $this->supplierModel->update($id, $data);
+
+        if (!$updated) {
+            Session::setFlash('error', 'Supplier gagal diperbarui.');
+            $this->redirect('/admin/supplier/edit/' . $id);
+        }
+
+        Session::remove('_old');
+        Session::setFlash('success', 'Supplier berhasil diperbarui.');
+        $this->redirect('/admin/supplier');
     }
 
-    public function update($id) {
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $nama = trim($_POST['nama'] ?? '');
-            $kontak_person = trim($_POST['kontak_person'] ?? '') ?: null;
-            $no_hp = trim($_POST['no_hp'] ?? '') ?: null;
-            $alamat = trim($_POST['alamat'] ?? '') ?: null;
-            $keterangan = trim($_POST['keterangan'] ?? '') ?: null;
-            $status = $_POST['status'] ?? 'aktif';
+    public function delete($id): void
+    {
+        // Cek akses
+        $this->requireRole('admin');
 
-            if (empty($nama)) {
-                Session::setFlash('error', 'Nama supplier wajib diisi.');
-                $this->redirect('/admin/supplier/edit/' . $id);
-                return;
-            }
+        $id = (int) $id;
+        $supplier = $this->supplierModel->findById($id);
 
-            $supplierModel = $this->model('Supplier');
-            
-            $supplierLama = $supplierModel->getById($id);
-            if (!$supplierLama) {
-                Session::setFlash('error', 'Data supplier tidak ditemukan.');
-                $this->redirect('/admin/supplier');
-                return;
-            }
-
-            $supplierModel->update($id, [
-                'nama' => $nama,
-                'kontak_person' => $kontak_person,
-                'no_hp' => $no_hp,
-                'alamat' => $alamat,
-                'keterangan' => $keterangan,
-                'status' => $status
-            ]);
-
-            Session::setFlash('success', 'Supplier berhasil diperbarui.');
+        if (!$supplier) {
+            Session::setFlash('error', 'Supplier tidak ditemukan.');
             $this->redirect('/admin/supplier');
         }
-    }
 
-    public function delete($id) {
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $supplierModel = $this->model('Supplier');
-            
-            $supplier = $supplierModel->getById($id);
-            if (!$supplier) {
-                Session::setFlash('error', 'Data supplier tidak ditemukan.');
-                $this->redirect('/admin/supplier');
-                return;
-            }
+        // Hapus atau nonaktif
+        $used = $this->supplierModel->isUsedByRestock($id);
+        $deleted = $this->supplierModel->deleteOrDeactivate($id);
 
-            if ($supplierModel->hasRestock($id)) {
-                // Nonaktifkan jika sudah punya riwayat restock
-                $supplierModel->update($id, array_merge($supplier, ['status' => 'nonaktif']));
-                Session::setFlash('success', 'Supplier dinonaktifkan karena memiliki riwayat restock.');
-                $this->redirect('/admin/supplier');
-                return;
-            }
-
-            $supplierModel->delete($id);
-            Session::setFlash('success', 'Supplier berhasil dihapus permanen.');
+        if (!$deleted) {
+            Session::setFlash('error', 'Supplier gagal diproses.');
             $this->redirect('/admin/supplier');
         }
+
+        if ($used) {
+            Session::setFlash('success', 'Supplier sudah pernah dipakai restock, jadi dinonaktifkan.');
+        } else {
+            Session::setFlash('success', 'Supplier berhasil dihapus.');
+        }
+
+        $this->redirect('/admin/supplier');
     }
 }

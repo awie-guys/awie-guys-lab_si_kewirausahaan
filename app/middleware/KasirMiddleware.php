@@ -1,17 +1,21 @@
 <?php
 
+declare(strict_types=1);
+
 class KasirMiddleware
 {
     public static function handle(): void
     {
-        AuthMiddleware::handle();
+        self::check();
+    }
 
-        $user = Session::user();
-        $role = $user['role'] ?? null;
+    public static function check(): void
+    {
+        // Cek akses kasir
+        AuthMiddleware::check();
 
-        if (!in_array($role, ['admin', 'kasir'], true)) {
-            header('Location: /403');
-            exit;
+        if (Session::role() !== 'kasir') {
+            Response::redirect('/403');
         }
     }
 }

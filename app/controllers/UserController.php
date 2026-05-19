@@ -1,160 +1,314 @@
 <?php
 
+declare(strict_types=1);
+
 class UserController extends Controller
 {
-    private User $userModel;
+    private $userModel;
 
     public function __construct()
     {
-        $this->requireRole('admin');
         $this->userModel = $this->model('User');
     }
 
     public function index(): void
     {
+        // Cek akses
+        $this->requireRole('admin');
+
+        // Ambil data
         $users = $this->userModel->getAll();
 
+        // Tampilkan halaman
         $this->view('admin/user/index', [
             'title' => 'Data User',
+            'activeMenu' => 'user',
+            'user' => Session::user(),
             'users' => $users,
-            'success' => Session::flash('success'),
-            'error' => Session::flash('error')
+            'flash' => [
+                'success' => Session::getFlash('success'),
+                'error' => Session::getFlash('error'),
+            ],
         ]);
     }
 
     public function create(): void
     {
+        // Cek akses
+        $this->requireRole('admin');
+
+        // Tampilkan form
         $this->view('admin/user/form', [
-            'title' => 'Tambah User',
-            'action' => '/admin/user/store'
+            'title' => 'Tambah Kasir',
+            'activeMenu' => 'user',
+            'user' => Session::user(),
+            'formAction' => '/admin/user/store',
+            'formMode' => 'create',
+            'userData' => null,
+            'errors' => Session::get('_errors', []),
+            'old' => Session::get('_old', []),
         ]);
+
+        Session::remove('_errors');
+        Session::remove('_old');
     }
 
     public function store(): void
     {
-        $nama = trim($_POST['nama'] ?? '');
-        $username = trim($_POST['username'] ?? '');
-        $password = trim($_POST['password'] ?? '');
+        // Cek akses
+        $this->requireRole('admin');
 
-        if ($nama === '' || $username === '' || $password === '') {
-            Session::flash('error', 'Semua field wajib diisi');
+        // Validasi input
+        $data = [
+            'username' => trim($_POST['username'] ?? ''),
+            'email' => trim($_POST['email'] ?? ''),
+            'password' => (string) ($_POST['password'] ?? ''),
+            'password_confirmation' => (string) ($_POST['password_confirmation'] ?? ''),
+            'status' => trim($_POST['status'] ?? 'aktif'),
+        ];
+
+        Session::set('_old', [
+            'username' => $data['username'],
+            'email' => $data['email'],
+            'status' => $data['status'],
+        ]);
+
+        $errors = Validator::validate($data, [
+            'username' => ['required', 'max:50'],
+            'email' => ['required', 'email', 'max:100'],
+            'password' => ['required', 'min:8'],
+            'password_confirmation' => ['required', 'same:password'],
+        ]);
+
+        if (!Validator::in($data['status'], ['aktif', 'nonaktif'])) {
+            $errors['status'] = 'Status tidak valid.';
+        }
+
+        if ($this->userModel->usernameExists($data['username'])) {
+            $errors['username'] = 'Username sudah dipakai.';
+        }
+
+        if ($this->userModel->emailExists($data['email'])) {
+            $errors['email'] = 'Email sudah dipakai.';
+        }
+
+        if (!empty($errors)) {
+            Session::set('_errors', $errors);
             $this->redirect('/admin/user/create');
         }
 
-        if ($this->userModel->usernameExists($username)) {
-            Session::flash('error', 'Username sudah digunakan');
+        // Simpan kasir
+        $createdId = $this->userModel->createKasir($data);
+
+        if ($createdId <= 0) {
+            Session::setFlash('error', 'Kasir gagal ditambahkan.');
             $this->redirect('/admin/user/create');
         }
 
-        $this->userModel->create([
-            'nama' => $nama,
-            'username' => $username,
-            'password' => $password,
-            'status' => 'aktif'
-        ]);
-
-        Session::flash('success', 'User kasir berhasil ditambahkan');
+        Session::remove('_old');
+        Session::setFlash('success', 'Kasir berhasil ditambahkan.');
         $this->redirect('/admin/user');
     }
 
-    public function edit(int $id): void
+    public function edit($id): void
     {
-        $user = $this->userModel->findById($id);
+        // Cek akses
+        $this->requireRole('admin');
 
-        if (!$user) {
-            Session::flash('error', 'User tidak ditemukan');
+        $id = (int) $id;
+        $userData = $this->userModel->findById($id);
+
+        if (!$userData) {
+            Session::setFlash('error', 'User tidak ditemukan.');
             $this->redirect('/admin/user');
         }
-  $this->view('admin/user/form', [
-            'title' => 'Edit User',
-            'user' => $user,
-            'action' => '/admin/user/update/' . $id
+
+        if ($userData['role'] === 'admin' || (int) $userData['is_protected'] === 1) {
+            Session::setFlash('error', 'Admin utama tidak boleh diedit dari menu ini.');
+            $this->redirect('/admin/user');
+        }
+
+        // Tampilkan form
+        $this->view('admin/user/form', [
+            'title' => 'Edit Kasir',
+            'activeMenu' => 'user',
+            'user' => Session::user(),
+            'formAction' => '/admin/user/update/' . $id,
+            'formMode' => 'edit',
+            'userData' => $userData,
+            'errors' => Session::get('_errors', []),
+            'old' => Session::get('_old', []),
         ]);
+
+        Session::remove('_errors');
+        Session::remove('_old');
     }
 
-    public function update(int $id): void
+    public function update($id): void
     {
-        $user = $this->userModel->findById($id);
+        // Cek akses
+        $this->requireRole('admin');
 
-        if (!$user) {
-            Session::flash('error', 'User tidak ditemukan');
+        $id = (int) $id;
+        $userData = $this->userModel->findById($id);
+
+        if (!$userData) {
+            Session::setFlash('error', 'User tidak ditemukan.');
             $this->redirect('/admin/user');
         }
 
-        if ($user['role'] === 'admin') {
-            Session::flash('error', 'Admin utama tidak boleh diubah');
+        if ($userData['role'] === 'admin' || (int) $userData['is_protected'] === 1) {
+            Session::setFlash('error', 'Admin utama tidak boleh diubah.');
             $this->redirect('/admin/user');
         }
 
-        $nama = trim($_POST['nama'] ?? '');
-        $username = trim($_POST['username'] ?? '');
-        $status = trim($_POST['status'] ?? 'aktif');
+        // Validasi input
+        $data = [
+            'username' => trim($_POST['username'] ?? ''),
+            'email' => trim($_POST['email'] ?? ''),
+            'status' => trim($_POST['status'] ?? 'aktif'),
+        ];
 
-        if ($nama === '' || $username === '') {
-            Session::flash('error', 'Nama dan username wajib diisi');
-            $this->redirect('/admin/user/edit/' . $id);
-        }
+        Session::set('_old', $data);
 
-        if ($this->userModel->usernameExists($username, $id)) {
-            Session::flash('error', 'Username sudah digunakan');
-            $this->redirect('/admin/user/edit/' . $id);
-        }
-
-        $this->userModel->update($id, [
-            'nama' => $nama,
-            'username' => $username,
-            'status' => $status
+        $errors = Validator::validate($data, [
+            'username' => ['required', 'max:50'],
+            'email' => ['required', 'email', 'max:100'],
         ]);
 
-        Session::flash('success', 'User berhasil diperbarui');
+        if (!Validator::in($data['status'], ['aktif', 'nonaktif'])) {
+            $errors['status'] = 'Status tidak valid.';
+        }
+
+        if ($this->userModel->usernameExists($data['username'], $id)) {
+            $errors['username'] = 'Username sudah dipakai.';
+        }
+
+        if ($this->userModel->emailExists($data['email'], $id)) {
+            $errors['email'] = 'Email sudah dipakai.';
+        }
+
+        if (!empty($errors)) {
+            Session::set('_errors', $errors);
+            $this->redirect('/admin/user/edit/' . $id);
+        }
+
+        // Simpan perubahan
+        $updated = $this->userModel->updateKasir($id, $data);
+
+        if (!$updated) {
+            Session::setFlash('error', 'Kasir gagal diperbarui.');
+            $this->redirect('/admin/user/edit/' . $id);
+        }
+
+        Session::remove('_old');
+        Session::setFlash('success', 'Kasir berhasil diperbarui.');
         $this->redirect('/admin/user');
     }
 
-    public function resetPassword(int $id): void
+    public function resetPassword($id): void
     {
-        $user = $this->userModel->findById($id);
+        // Cek akses
+        $this->requireRole('admin');
 
-        if (!$user) {
-            Session::flash('error', 'User tidak ditemukan');
+        $id = (int) $id;
+        $userData = $this->userModel->findById($id);
+
+        if (!$userData) {
+            Session::setFlash('error', 'User tidak ditemukan.');
             $this->redirect('/admin/user');
         }
 
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $password = trim($_POST['password'] ?? '');
-
-            if ($password === '') {
-                Session::flash('error', 'Password wajib diisi');
-                $this->redirect('/admin/user/reset-password/' . $id);
-            }
-   $this->userModel->resetPassword($id, $password);
-
-            Session::flash('success', 'Password berhasil direset');
+        if ($userData['role'] === 'admin' || (int) $userData['is_protected'] === 1) {
+            Session::setFlash('error', 'Password admin utama tidak boleh direset dari menu ini.');
             $this->redirect('/admin/user');
         }
 
+        // Tampilkan form reset
         $this->view('admin/user/reset-password', [
-            'title' => 'Reset Password',
-            'user' => $user
+            'title' => 'Reset Password Kasir',
+            'activeMenu' => 'user',
+            'user' => Session::user(),
+            'userData' => $userData,
+            'errors' => Session::get('_errors', []),
         ]);
+
+        Session::remove('_errors');
     }
 
-    public function delete(int $id): void
+    public function updatePassword($id): void
     {
-        $user = $this->userModel->findById($id);
+        // Cek akses
+        $this->requireRole('admin');
 
-        if (!$user) {
-            Session::flash('error', 'User tidak ditemukan');
+        $id = (int) $id;
+        $userData = $this->userModel->findById($id);
+
+        if (!$userData) {
+            Session::setFlash('error', 'User tidak ditemukan.');
             $this->redirect('/admin/user');
         }
 
-        if ($user['role'] === 'admin') {
-            Session::flash('error', 'Admin tidak boleh dihapus');
+        if ($userData['role'] === 'admin' || (int) $userData['is_protected'] === 1) {
+            Session::setFlash('error', 'Password admin utama tidak boleh direset dari menu ini.');
             $this->redirect('/admin/user');
         }
 
-        $this->userModel->delete($id);
+        // Validasi input
+        $data = [
+            'password' => (string) ($_POST['password'] ?? ''),
+            'password_confirmation' => (string) ($_POST['password_confirmation'] ?? ''),
+        ];
 
-        Session::flash('success', 'User berhasil dihapus');
+        $errors = Validator::validate($data, [
+            'password' => ['required', 'min:8'],
+            'password_confirmation' => ['required', 'same:password'],
+        ]);
+
+        if (!empty($errors)) {
+            Session::set('_errors', $errors);
+            $this->redirect('/admin/user/reset-password/' . $id);
+        }
+
+        // Simpan password
+        $updated = $this->userModel->resetPassword($id, $data['password']);
+
+        if (!$updated) {
+            Session::setFlash('error', 'Password kasir gagal direset.');
+            $this->redirect('/admin/user/reset-password/' . $id);
+        }
+
+        Session::setFlash('success', 'Password kasir berhasil direset.');
+        $this->redirect('/admin/user');
+    }
+
+    public function delete($id): void
+    {
+        // Cek akses
+        $this->requireRole('admin');
+
+        $id = (int) $id;
+        $userData = $this->userModel->findById($id);
+
+        if (!$userData) {
+            Session::setFlash('error', 'User tidak ditemukan.');
+            $this->redirect('/admin/user');
+        }
+
+        if ($userData['role'] === 'admin' || (int) $userData['is_protected'] === 1) {
+            Session::setFlash('error', 'Admin utama tidak boleh dihapus.');
+            $this->redirect('/admin/user');
+        }
+
+        // Nonaktifkan kasir
+        $deleted = $this->userModel->deleteOrDeactivate($id);
+
+        if (!$deleted) {
+            Session::setFlash('error', 'Kasir gagal dinonaktifkan.');
+            $this->redirect('/admin/user');
+        }
+
+        Session::setFlash('success', 'Kasir berhasil dinonaktifkan.');
         $this->redirect('/admin/user');
     }
 }

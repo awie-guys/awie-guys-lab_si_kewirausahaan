@@ -1,59 +1,162 @@
 <?php
 
-class Kategori extends Model {
+declare(strict_types=1);
 
-    public function getAll() {
-        $query = "SELECT id, nama, deskripsi, created_at, updated_at FROM kategori ORDER BY id DESC";
-        $stmt = $this->db->prepare($query);
-        $stmt->execute();
-        
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+class Kategori extends Model
+{
+    private $table = 'kategori';
+
+    public function getAll(): array
+    {
+        // Ambil data utama
+        $sql = "
+            SELECT 
+                id,
+                nama,
+                deskripsi,
+                created_at,
+                updated_at
+            FROM {$this->table}
+            ORDER BY nama ASC
+            LIMIT 100
+        ";
+
+        return $this->fetchAll($sql);
     }
 
-    public function getById($id) {
-        $query = "SELECT id, nama, deskripsi FROM kategori WHERE id = :id LIMIT 1";
-        $stmt = $this->db->prepare($query);
-        $stmt->bindParam(':id', $id);
-        $stmt->execute();
-        
-        return $stmt->fetch(PDO::FETCH_ASSOC);
+    public function findById(int $id)
+    {
+        // Ambil detail kategori
+        $sql = "
+            SELECT 
+                id,
+                nama,
+                deskripsi,
+                created_at,
+                updated_at
+            FROM {$this->table}
+            WHERE id = :id
+            LIMIT 1
+        ";
+
+        return $this->fetch($sql, [
+            'id' => $id,
+        ]);
     }
 
-    public function insert($data) {
-        $query = "INSERT INTO kategori (nama, deskripsi) VALUES (:nama, :deskripsi)";
-        $stmt = $this->db->prepare($query);
-        $stmt->bindParam(':nama', $data['nama']);
-        $stmt->bindParam(':deskripsi', $data['deskripsi']);
-        
-        return $stmt->execute();
+    public function getById(int $id)
+    {
+        return $this->findById($id);
     }
 
-    public function update($id, $data) {
-        $query = "UPDATE kategori SET nama = :nama, deskripsi = :deskripsi WHERE id = :id";
-        $stmt = $this->db->prepare($query);
-        $stmt->bindParam(':nama', $data['nama']);
-        $stmt->bindParam(':deskripsi', $data['deskripsi']);
-        $stmt->bindParam(':id', $id);
-        
-        return $stmt->execute();
+    public function create(array $data): bool
+    {
+        // Simpan kategori
+        $sql = "
+            INSERT INTO {$this->table}
+                (nama, deskripsi)
+            VALUES
+                (:nama, :deskripsi)
+        ";
+
+        return $this->execute($sql, [
+            'nama' => trim((string) $data['nama']),
+            'deskripsi' => trim((string) ($data['deskripsi'] ?? '')),
+        ]);
     }
 
-    public function isUsedByBarang($id) {
-        // Cek apakah kategori masih dipakai oleh barang
-        $query = "SELECT id FROM barang WHERE id_kategori = :id LIMIT 1";
-        $stmt = $this->db->prepare($query);
-        $stmt->bindParam(':id', $id);
-        $stmt->execute();
-        
-        return $stmt->fetch(PDO::FETCH_ASSOC) ? true : false;
+    public function insert(array $data): bool
+    {
+        return $this->create($data);
     }
 
-    public function delete($id) {
-        $query = "DELETE FROM kategori WHERE id = :id";
-        $stmt = $this->db->prepare($query);
-        $stmt->bindParam(':id', $id);
-        
-        return $stmt->execute();
+    public function update(int $id, array $data): bool
+    {
+        // Update kategori
+        $sql = "
+            UPDATE {$this->table}
+            SET 
+                nama = :nama,
+                deskripsi = :deskripsi
+            WHERE id = :id
+            LIMIT 1
+        ";
+
+        return $this->execute($sql, [
+            'nama' => trim((string) $data['nama']),
+            'deskripsi' => trim((string) ($data['deskripsi'] ?? '')),
+            'id' => $id,
+        ]);
     }
 
+    public function deleteOrDeactivate(int $id): bool
+    {
+        // Tabel kategori belum punya status, jadi hapus permanen kalau aman
+        if ($this->isUsedByBarang($id)) {
+            return false;
+        }
+
+        $sql = "
+            DELETE FROM {$this->table}
+            WHERE id = :id
+            LIMIT 1
+        ";
+
+        return $this->execute($sql, [
+            'id' => $id,
+        ]);
+    }
+
+    public function delete(int $id): bool
+    {
+        return $this->deleteOrDeactivate($id);
+    }
+
+    public function isUsedByBarang(int $id): bool
+    {
+        // Cek relasi ke barang
+        $sql = "
+            SELECT id
+            FROM barang
+            WHERE id_kategori = :id
+            LIMIT 1
+        ";
+
+        return $this->fetch($sql, [
+            'id' => $id,
+        ]) !== false;
+    }
+
+    public function namaExists(string $nama, ?int $exceptId = null): bool
+    {
+        // Cek nama duplikat
+        $sql = "
+            SELECT id
+            FROM {$this->table}
+            WHERE nama = :nama
+        ";
+
+        $params = [
+            'nama' => trim($nama),
+        ];
+
+        if ($exceptId !== null) {
+            $sql .= " AND id != :id";
+            $params['id'] = $exceptId;
+        }
+
+        $sql .= " LIMIT 1";
+
+        return $this->fetch($sql, $params) !== false;
+    }
+
+    public function countAll(): int
+    {
+        $sql = "
+            SELECT COUNT(id)
+            FROM {$this->table}
+        ";
+
+        return $this->countRows($sql);
+    }
 }

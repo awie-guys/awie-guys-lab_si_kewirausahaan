@@ -1,50 +1,48 @@
 <?php
 
+declare(strict_types=1);
+
 class Controller
 {
     protected function view(string $path, array $data = []): void
     {
-        $viewPath = dirname(__DIR__) . '/views/' . trim($path, '/') . '.php';
+        $viewFile = $this->viewPath($path);
 
-        if (!file_exists($viewPath)) {
-            throw new Exception('View tidak ditemukan: ' . $path);
+        if (!file_exists($viewFile)) {
+            Response::abort(404, 'View tidak ditemukan: ' . $path);
         }
 
+        // Kirim data ke view
         extract($data, EXTR_SKIP);
 
-        require $viewPath;
+        require $viewFile;
     }
 
-    protected function redirect(string $url): void
+    protected function model(string $modelName)
     {
-        if (preg_match('#^https?://#', $url)) {
-            header('Location: ' . $url);
-            exit;
-        }
-
-        $baseUrl = defined('BASE_URL') ? BASE_URL : '';
-
-        $target = rtrim($baseUrl, '/') . '/' . ltrim($url, '/');
-
-        header('Location: ' . $target);
-        exit;
-    }
-
-    protected function model(string $modelName): object
-    {
-        $modelFile = dirname(__DIR__) . '/models/' . $modelName . '.php';
+        $modelFile = APP_PATH . DIRECTORY_SEPARATOR . 'models' . DIRECTORY_SEPARATOR . $modelName . '.php';
 
         if (!file_exists($modelFile)) {
-            throw new Exception('Model tidak ditemukan: ' . $modelName);
+            throw new RuntimeException('Model tidak ditemukan: ' . $modelName);
         }
 
         require_once $modelFile;
 
         if (!class_exists($modelName)) {
-            throw new Exception('Class model tidak ditemukan: ' . $modelName);
+            throw new RuntimeException('Class model tidak ditemukan: ' . $modelName);
         }
 
         return new $modelName();
+    }
+
+    protected function redirect(string $url): void
+    {
+        Response::redirect($url);
+    }
+
+    protected function back(): void
+    {
+        Response::back();
     }
 
     protected function requireLogin(): void
@@ -54,13 +52,12 @@ class Controller
         }
     }
 
-    protected function requireRole(string|array $roles): void
+    protected function requireRole($roles): void
     {
         $this->requireLogin();
 
         $user = Session::user();
         $userRole = $user['role'] ?? null;
-
         $allowedRoles = is_array($roles) ? $roles : [$roles];
 
         if (!in_array($userRole, $allowedRoles, true)) {
@@ -68,8 +65,38 @@ class Controller
         }
     }
 
-    protected function currentUser(): mixed
+    protected function currentUser()
     {
         return Session::user();
+    }
+
+    protected function input(string $key, $default = null)
+    {
+        return $_POST[$key] ?? $_GET[$key] ?? $default;
+    }
+
+    protected function old(string $key, $default = null)
+    {
+        $old = Session::get('_old', []);
+
+        return $old[$key] ?? $default;
+    }
+
+    protected function rememberOld(array $data): void
+    {
+        Session::set('_old', $data);
+    }
+
+    protected function clearOld(): void
+    {
+        Session::remove('_old');
+    }
+
+    private function viewPath(string $path): string
+    {
+        $path = trim($path, '/');
+        $path = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $path);
+
+        return APP_PATH . DIRECTORY_SEPARATOR . 'views' . DIRECTORY_SEPARATOR . $path . '.php';
     }
 }

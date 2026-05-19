@@ -1,33 +1,39 @@
 <?php
 
+declare(strict_types=1);
+
 class Session
 {
+    private static $started = false;
+
     public static function start(): void
     {
-        if (session_status() === PHP_SESSION_NONE) {
-            if (!headers_sent()) {
-                session_set_cookie_params([
-                    'lifetime' => 0,
-                    'path' => '/',
-                    'domain' => '',
-                    'secure' => false,
-                    'httponly' => true,
-                    'samesite' => 'Lax',
-                ]);
-            }
-
-            session_start();
+        if (self::$started || session_status() === PHP_SESSION_ACTIVE) {
+            self::$started = true;
+            return;
         }
+
+        // Config session
+        session_set_cookie_params([
+            'lifetime' => 0,
+            'path' => '/',
+            'domain' => '',
+            'secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ]);
+
+        session_start();
+        self::$started = true;
     }
 
-    public static function set(string $key, mixed $value): void
+    public static function set(string $key, $value): void
     {
         self::start();
-
         $_SESSION[$key] = $value;
     }
 
-    public static function get(string $key, mixed $default = null): mixed
+    public static function get(string $key, $default = null)
     {
         self::start();
 
@@ -44,7 +50,6 @@ class Session
     public static function remove(string $key): void
     {
         self::start();
-
         unset($_SESSION[$key]);
     }
 
@@ -61,14 +66,21 @@ class Session
                 session_name(),
                 '',
                 time() - 42000,
-                $params['path'],
-                $params['domain'],
-                $params['secure'],
-                $params['httponly']
+                $params['path'] ?? '/',
+                $params['domain'] ?? '',
+                $params['secure'] ?? false,
+                $params['httponly'] ?? true
             );
         }
 
         session_destroy();
+        self::$started = false;
+    }
+
+    public static function regenerate(): void
+    {
+        self::start();
+        session_regenerate_id(true);
     }
 
     public static function flash(string $key, ?string $message = null): ?string
@@ -84,24 +96,68 @@ class Session
             return null;
         }
 
-        $flashMessage = $_SESSION['_flash'][$key];
-
+        $flash = $_SESSION['_flash'][$key];
         unset($_SESSION['_flash'][$key]);
 
-        return $flashMessage;
+        return $flash;
+    }
+
+    public static function setFlash(string $key, string $message): void
+    {
+        self::flash($key, $message);
+    }
+
+    public static function getFlash(string $key): ?string
+    {
+        return self::flash($key);
+    }
+
+    public static function allFlash(): array
+    {
+        self::start();
+
+        $flash = $_SESSION['_flash'] ?? [];
+        unset($_SESSION['_flash']);
+
+        return $flash;
+    }
+
+    public static function login(array $user): void
+    {
+        self::regenerate();
+        self::set('user', $user);
+    }
+
+    public static function logout(): void
+    {
+        self::destroy();
     }
 
     public static function isLoggedIn(): bool
     {
         self::start();
 
-        return isset($_SESSION['user']);
+        return isset($_SESSION['user']) && is_array($_SESSION['user']);
     }
 
-    public static function user(): mixed
+    public static function user()
     {
         self::start();
 
         return $_SESSION['user'] ?? null;
+    }
+
+    public static function userId(): ?int
+    {
+        $user = self::user();
+
+        return isset($user['id']) ? (int) $user['id'] : null;
+    }
+
+    public static function role(): ?string
+    {
+        $user = self::user();
+
+        return $user['role'] ?? null;
     }
 }

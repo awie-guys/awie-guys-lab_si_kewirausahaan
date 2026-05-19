@@ -1,16 +1,21 @@
 <?php
 
+declare(strict_types=1);
+
 class AdminMiddleware
 {
     public static function handle(): void
     {
-        AuthMiddleware::handle();
+        self::check();
+    }
 
-        $user = Session::user();
+    public static function check(): void
+    {
+        // Cek akses admin
+        AuthMiddleware::check();
 
-        if (($user['role'] ?? null) !== 'admin') {
-            header('Location: /403');
-            exit;
+        if (Session::role() !== 'admin') {
+            Response::redirect('/403');
         }
     }
 }

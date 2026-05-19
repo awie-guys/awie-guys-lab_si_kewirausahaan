@@ -1,10 +1,14 @@
 Options -Indexes
+DirectoryIndex index.php
 
 <IfModule mod_rewrite.c>
     RewriteEngine On
 
-    RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteCond %{REQUEST_FILENAME} !-d
+    # File asset asli langsung dilayani
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
 
-    RewriteRule ^ index.php [QSA,L]
+    # Sisanya lempar ke front controller
+    RewriteRule ^ index.php [L,QSA]
 </IfModule>
