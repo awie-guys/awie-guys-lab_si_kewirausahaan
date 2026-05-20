@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: May 16, 2026 at 07:59 PM
+-- Generation Time: May 20, 2026 at 02:25 AM
 -- Server version: 8.0.30
 -- PHP Version: 8.3.28
 
@@ -47,8 +47,8 @@ CREATE TABLE `barang` (
 --
 
 INSERT INTO `barang` (`id`, `kode_barang`, `nama`, `barcode`, `id_kategori`, `satuan`, `harga_jual`, `stok`, `stok_minimum`, `status`, `created_at`, `updated_at`) VALUES
-(2, 'brg001', 'pen', 'KPS202605155445', 1, 'pcs', 1999.00, 8, 5, 'aktif', '2026-05-15 12:49:46', '2026-05-16 19:08:48'),
-(3, 'BRG002', 'pencil', 'KPS202605167266', 1, 'pcs', 2000.00, 41, 5, 'aktif', '2026-05-16 11:56:52', '2026-05-16 19:08:48'),
+(2, 'brg001', 'pen', 'KPS202605155445', 1, 'pcs', 1999.00, 6, 5, 'aktif', '2026-05-15 12:49:46', '2026-05-18 17:32:07'),
+(3, 'BRG002', 'pencil', 'KPS202605167266', 1, 'pcs', 2000.00, 39, 5, 'aktif', '2026-05-16 11:56:52', '2026-05-18 17:32:07'),
 (4, 'BRG003', 'Minyak', 'KPS202605166283', 2, 'pcs', 21000.00, 0, 5, 'aktif', '2026-05-16 14:14:24', '2026-05-16 14:14:24');
 
 -- --------------------------------------------------------
@@ -82,7 +82,9 @@ INSERT INTO `detail_transaksi` (`id`, `id_transaksi`, `id_barang`, `qty`, `harga
 (6, 6, 2, 2, 1999.00, 1000.00, 3998.00, 2000.00, 1998.00),
 (7, 7, 3, 5, 2000.00, 1000.00, 10000.00, 5000.00, 5000.00),
 (8, 8, 3, 4, 2000.00, 1000.00, 8000.00, 4000.00, 4000.00),
-(9, 8, 2, 2, 1999.00, 1000.00, 3998.00, 2000.00, 1998.00);
+(9, 8, 2, 2, 1999.00, 1000.00, 3998.00, 2000.00, 1998.00),
+(10, 9, 2, 2, 1999.00, 1000.00, 3998.00, 2000.00, 1998.00),
+(11, 9, 3, 2, 2000.00, 1000.00, 4000.00, 2000.00, 2000.00);
 
 -- --------------------------------------------------------
 
@@ -193,7 +195,8 @@ INSERT INTO `transaksi` (`id`, `kode_transaksi`, `id_user`, `tanggal`, `total_ju
 (5, 'TRX20260516022908519', 1, '2026-05-16 02:29:08', 5997.00, 3000.00, 2997.00, 'cash', 10000.00, 4003.00, '2026-05-15 19:29:08'),
 (6, 'TRX20260516023530980', 1, '2026-05-16 02:35:30', 3998.00, 2000.00, 1998.00, 'cash', 10000.00, 6002.00, '2026-05-15 19:35:30'),
 (7, 'TRX20260516204153875', 1, '2026-05-16 20:41:53', 10000.00, 5000.00, 5000.00, 'qris', 10000.00, 0.00, '2026-05-16 13:41:53'),
-(8, 'TRX20260517020848915', 1, '2026-05-17 02:08:48', 11998.00, 6000.00, 5998.00, 'cash', 20000.00, 8002.00, '2026-05-16 19:08:48');
+(8, 'TRX20260517020848915', 1, '2026-05-17 02:08:48', 11998.00, 6000.00, 5998.00, 'cash', 20000.00, 8002.00, '2026-05-16 19:08:48'),
+(9, 'TRX20260519003207691', 2, '2026-05-19 00:32:07', 7998.00, 4000.00, 3998.00, 'transfer', 7998.00, 0.00, '2026-05-18 17:32:07');
 
 -- --------------------------------------------------------
 
@@ -299,7 +302,7 @@ ALTER TABLE `barang`
 -- AUTO_INCREMENT for table `detail_transaksi`
 --
 ALTER TABLE `detail_transaksi`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT for table `kategori`
@@ -323,7 +326,7 @@ ALTER TABLE `supplier`
 -- AUTO_INCREMENT for table `transaksi`
 --
 ALTER TABLE `transaksi`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `users`
