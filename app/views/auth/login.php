@@ -67,13 +67,13 @@ $oldUsername = is_array($old) ? ($old['username'] ?? '') : '';
 
                 <div class="auth-title-block" data-aos="fade-down" data-aos-delay="120">
                     <span>Sistem Kasir</span>
-                    <h1>Koperasi Sekolah</h1>
+                    <h1>Laboratorium Kewirausahaan</h1>
                     <p>MTSN 8 Banyuwangi</p>
                     <div class="auth-title-line"></div>
                 </div>
 
                 <p class="auth-description" data-aos="fade-up" data-aos-delay="180">
-                    Kelola Koperasi Sekolah dengan lebih mudah, cepat, dan terstruktur.
+                     Kelola Laboratorium Kewirausahaan sekolah dengan lebih mudah,cepat dan terstruktur
                 </p>
             </div>
 

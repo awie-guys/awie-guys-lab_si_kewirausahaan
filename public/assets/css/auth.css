@@ -196,7 +196,7 @@ input {
 }
 
 .auth-logo-wrap img {
-    width: 100%;
+    width: 150%;
     height: 100%;
     object-fit: contain;
 }
@@ -217,6 +217,7 @@ input {
     font-weight: 600;
     letter-spacing: 0.28em;
     text-transform: uppercase;
+    padding: 15px;
 }
 
 .auth-title-block h1 {
@@ -232,7 +233,7 @@ input {
     max-width: 460px;
     margin: 10px auto 0;
     color: rgba(255, 255, 255, 0.78);
-    font-size: clamp(12px, 0.95vw, 14px);
+    font-size: clamp(60px, 0.95vw, 14px); 
     line-height: 1.5;
 }
 
@@ -559,7 +560,7 @@ input {
     }
 
     .auth-title-block p {
-        font-size: 12px;
+        font-size: 20px;
     }
 
     .auth-description {
@@ -706,7 +707,7 @@ input {
     }
 
     .auth-title-block p {
-        font-size: 11px;
+        font-size: 20px;
     }
 
     .auth-description {
