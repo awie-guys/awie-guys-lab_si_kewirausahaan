@@ -114,7 +114,7 @@ $userName = dash_user_name($user);
             <h2>Halo, <?= dash_e($userName) ?></h2>
 
             <p>
-                Pantau barang, transaksi, stok menipis, dan performa koperasi dari satu halaman dashboard.
+                Pantau transaksi, stok barang, dan performa koperasi dalam satu dashboard yang praktis dan real-time.
             </p>
         </div>
 
